@@ -1,0 +1,7 @@
+name "cosmicolor"
+description "A terminal output colorizer library."
+authors "Mireille Arseneault"
+copyright "Copyright © 2025, Mireille Arseneault"
+license "mit"
+
+targetPath "build"
