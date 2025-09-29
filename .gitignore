@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/cosmicolor
+cosmicolor.so
+cosmicolor.dylib
+cosmicolor.dll
+cosmicolor.a
+cosmicolor.lib
+cosmicolor-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
