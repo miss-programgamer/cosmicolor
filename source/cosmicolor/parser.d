@@ -1,14 +1,26 @@
 module cosmicolor.parser;
 
-import std.range.primitives;
-import std.typecons;
-
-import cosmicolor : enable_color;
+import std.algorithm;
 import std.algorithm.searching;
-import std.stdio;
+import std.array;
+import std.ascii;
+import std.format;
+import std.range.primitives;
+import std.traits;
+
+import cosmicolor.rendition;
+
+
+package auto parseFmt(Char)(in bool enable_color, in Char[] fmt)
+{
+	return Parser!Char(enable_color).parseFmt(fmt);
+}
+
 
 package struct Parser(Char) if (isSomeString!(Char[]))
 {
+	private bool enable_color;
+
 	private Expect expect;
 
 	private Appender!(Char[]) content;
@@ -27,22 +39,19 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 
 	private int strike_count;
 
-	this()
+
+	this(in bool enable_color)
 	{
-		expect = Expect.Text;
+		this.enable_color = enable_color;
 		foregrounds = [];
 		backgrounds = [];
-		bold_count = 0;
-		italic_count = 0;
-		underline_count = 0;
-		strike_count = 0;
 	}
 
 	Char[] parseFmt(in Char[] fmt)
 	{
 		foreach (c; fmt)
 		{
-			switch (expect)
+			final switch (expect)
 			{
 				case Expect.Text:
 					handleText(c);
@@ -59,7 +68,12 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		}
 
 		expect = Expect.Text;
-		return content.toString();
+		content.clear();
+
+		if (!foregrounds.empty || !backgrounds.empty || bold_count || italic_count || underline_count || strike_count)
+		writeEscapeCode(0);
+
+		return result[];
 	}
 
 	private void handleText(Char c)
@@ -82,314 +96,242 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 
 	private void handleTag(Char c)
 	{
-		if (c.isalpha || (c == '/' && content == "<"))
+		if (c.isAlpha || c == '_' || (c == '/' && content[] == "<"))
 		{
 			content ~= c;
 		}
 		else if (c == '>')
 		{
-			content ~= c;
+			handleTagValue(content[] ~ c);
 			expect = Expect.Text;
-
-			if (content.startsWith("</"))
-			{
-				auto tag = content[2 .. $ - 1];
-
-				if (auto rendition = renditionFromTag(tag))
-				{
-					if (auto color = fgColorFromRendition(rendition.get))
-					{
-						if (!foregrounds.empty)
-						{
-							debug if (foregrounds.back != color.get)
-							{
-								stderr.writefln!"[Cosmicolor]: closing color tag mismatch (expected %s, got %s)"(
-									foregrounds.back, color.get);
-							}
-
-							foregrounds.popBack();
-
-							if (foregrounds.empty)
-							{
-								if (enable_color)
-								{
-									content ~= "\xB1[%sm".format();
-								}
-							}
-						}
-						else
-						{
-							debug
-							{
-								stderr.writefln!"[Cosmicolor]: unexpected closing tag (%s)"(
-									color.get);
-							}
-						}
-					}
-					else if (auto color = bgColorFromRendition(rendition.get))
-					{
-						// 
-					}
-				}
-			}
-			else if (content.startsWith("<"))
-			{
-				auto tag = content[1 .. $ - 1];
-
-				if (auto rendition = renditionFromTag(tag))
-				{
-					if (auto color = colorFromRendition(rendition.get))
-					{
-
-					}
-				}
-			}
+			content.clear();
 		}
 		else
 		{
-			content ~= c;
-			result ~= content;
+			result ~= content[] ~ c;
 			expect = Expect.Text;
+			content.clear();
 		}
 	}
 
 	private void handleEsc(Char c)
 	{
-		if (c.isalpha)
+		if (c.isAlpha)
 		{
 			content ~= c;
 		}
 		else if (c == ';')
 		{
-			content ~= c;
+			handleEscValue(content[] ~ c);
 			expect = Expect.Text;
+			content.clear();
 		}
 		else
 		{
-			content ~= c;
-			result ~= content;
+			result ~= content[] ~ c;
 			expect = Expect.Text;
+			content.clear();
 		}
 	}
-}
 
-package enum Expect
-{
-	Text,
-	Tag,
-	Esc
-}
-
-package enum Rendition
-{
-	Reset = 0,
-
-	Bold = 1,
-	Faint = 2,
-	Italic = 3,
-	Underline = 4,
-	BlinkSlow = 5,
-	BlinkFast = 6,
-	Invert = 7,
-	Conceal = 8,
-	Strike = 9,
-
-	NotBold = 22,
-	NotItalic = 23,
-	NotUnderline = 24,
-	NotBlink = 25,
-	NotInvert = 27,
-	NotConceal = 28,
-	NotStrike = 29,
-
-	// Font control
-
-	FgBlack = 30,
-	FgRed = 31,
-	FgGreen = 32,
-	FgOrange = 33,
-	FgBlue = 34,
-	FgMagenta = 35,
-	FgCyan = 36,
-	FgLGrey = 37,
-
-	BgBlack = 40,
-	BgRed = 41,
-	BgGreen = 42,
-	BgOrange = 43,
-	BgBlue = 44,
-	BgMagenta = 45,
-	BgCyan = 46,
-	BgLGrey = 47,
-
-	FgGrey = 90,
-	FgLRed = 91,
-	FgLGreen = 92,
-	FgYellow = 93,
-	FgLBlue = 94,
-	FgLMagenta = 95,
-	FgLCyan = 96,
-	FgWhite = 97,
-
-	BgGrey = 100,
-	BgLRed = 101,
-	BgLGreen = 102,
-	BgYellow = 103,
-	BgLBlue = 104,
-	BgLMagenta = 105,
-	BgLCyan = 106,
-	BgWhite = 107,
-}
-
-package enum FgColor
-{
-	FgBlack = 30,
-	FgRed = 31,
-	FgGreen = 32,
-	FgOrange = 33,
-	FgBlue = 34,
-	FgMagenta = 35,
-	FgCyan = 36,
-	FgLGrey = 37,
-
-	FgGrey = 90,
-	FgLRed = 91,
-	FgLGreen = 92,
-	FgYellow = 93,
-	FgLBlue = 94,
-	FgLMagenta = 95,
-	FgLCyan = 96,
-	FgWhite = 97,
-}
-
-package enum BgColor
-{
-	BgBlack = 40,
-	BgRed = 41,
-	BgGreen = 42,
-	BgOrange = 43,
-	BgBlue = 44,
-	BgMagenta = 45,
-	BgCyan = 46,
-	BgLGrey = 47,
-
-	BgGrey = 100,
-	BgLRed = 101,
-	BgLGreen = 102,
-	BgYellow = 103,
-	BgLBlue = 104,
-	BgLMagenta = 105,
-	BgLCyan = 106,
-	BgWhite = 107,
-}
-
-package Nullable!Rendition renditionFromTag(Char)(in Char[] tag)
-{
-	switch (tag)
+	private void handleTagValue(Char[] tag)
 	{
-		case "b":
-			return Rendition.Bold.nullable;
-		case "i":
-			return Rendition.Italic.nullable;
-		case "u":
-			return Rendition.Underline.nullable;
-		case "s":
-			return Rendition.Strike.nullable;
+		final switch (tagPair(tag))
+		{
+			case TagPair.Opening:
+				if (auto rend = renditionFromTagName(tag))
+				{
+					if (auto fg = fgColorFromRendition(rend.get))
+					{
+						const foreground = fg.get;
+						writeEscapeCode(foreground);
+						foregrounds = foregrounds ~ [foreground];
+					}
+					else if (auto bg = bgColorFromRendition(rend.get))
+					{
+						const background = bg.get;
+						writeEscapeCode(background);
+						backgrounds = backgrounds ~ [background];
+					}
+					else
+					{
+						writeEscapeCode(rend.get);
 
-		case "black":
-			return Rendition.FgBlack.nullable;
-		case "red":
-			return Rendition.FgRed.nullable;
-		case "green":
-			return Rendition.FgGreen.nullable;
-		case "orange":
-			return Rendition.FgOrange.nullable;
-		case "blue":
-			return Rendition.FgBlue.nullable;
-		case "magenta":
-			return Rendition.FgMagenta.nullable;
-		case "cyan":
-			return Rendition.FgCyan.nullable;
-		case "lgrey":
-			return Rendition.FgLGrey.nullable;
+						switch (rend.get)
+						{
+							case Rendition.Bold:
+								bold_count += 1;
+								break;
 
-		case "bg_black":
-			return Rendition.BgBlack.nullable;
-		case "bg_red":
-			return Rendition.BgRed.nullable;
-		case "bg_green":
-			return Rendition.BgGreen.nullable;
-		case "bg_orange":
-			return Rendition.BgOrange.nullable;
-		case "bg_blue":
-			return Rendition.BgBlue.nullable;
-		case "bg_magenta":
-			return Rendition.BgMagenta.nullable;
-		case "bg_cyan":
-			return Rendition.BgCyan.nullable;
-		case "bg_lgrey":
-			return Rendition.BgLGrey.nullable;
+							case Rendition.Italic:
+								italic_count += 1;
+								break;
 
-		case "grey":
-			return Rendition.FgGrey.nullable;
-		case "lred":
-			return Rendition.FgLRed.nullable;
-		case "lgreen":
-			return Rendition.FgLGreen.nullable;
-		case "yellow":
-			return Rendition.FgYellow.nullable;
-		case "lblue":
-			return Rendition.Fglblue.nullable;
-		case "lmagenta":
-			return Rendition.FgLMagenta.nullable;
-		case "lcyan":
-			return Rendition.FgLCyan.nullable;
-		case "white":
-			return Rendition.FgWhite.nullable;
+							case Rendition.Underline:
+								underline_count += 1;
+								break;
 
-		case "bg_grey":
-			return Rendition.BgGrey.nullable;
-		case "bg_lred":
-			return Rendition.BgLRed.nullable;
-		case "bg_lgreen":
-			return Rendition.BgLGreen.nullable;
-		case "bg_yellow":
-			return Rendition.BgYellow.nullable;
-		case "bg_lblue":
-			return Rendition.Bglblue.nullable;
-		case "bg_lmagenta":
-			return Rendition.BgLMagenta.nullable;
-		case "bg_lcyan":
-			return Rendition.BgLCyan.nullable;
-		case "bg_white":
-			return Rendition.BgWhite.nullable;
+							case Rendition.Strike:
+								strike_count += 1;
+								break;
+
+							default:
+								break;
+						}
+					}
+				}
+				break;
+
+			case TagPair.Closing:
+				if (auto rend = renditionFromTagName(tag))
+				{
+					if (auto color = fgColorFromRendition(rend.get))
+					{
+						if (!foregrounds.empty)
+						{
+							foregrounds.popBack();
+
+							if (!foregrounds.empty)
+							{ writeEscapeCode(foregrounds.back); }
+							else
+							{ writeEscapeCode(FgColor.FgNone); }
+						}
+					}
+					else if (auto color = bgColorFromRendition(rend.get))
+					{
+						if (!backgrounds.empty)
+						{
+							backgrounds.popBack();
+
+							if (!backgrounds.empty)
+							{ writeEscapeCode(backgrounds.back); }
+							else
+							{ writeEscapeCode(BgColor.BgNone); }
+						}
+					}
+					else
+					{
+						switch (rend.get)
+						{
+							case Rendition.Bold:
+								if (bold_count)
+								{
+									bold_count -= 1;
+									if (!bold_count)
+									{ writeEscapeCode(Rendition.NotBold); }
+								}
+								break;
+
+							case Rendition.Italic:
+								if (italic_count)
+								{
+									italic_count -= 1;
+									if (!italic_count)
+									{ writeEscapeCode(Rendition.NotItalic); }
+								}
+								break;
+
+							case Rendition.Underline:
+								if (underline_count)
+								{
+									underline_count -= 1;
+									if (!underline_count)
+									{ writeEscapeCode(Rendition.NotUnderline); }
+								}
+								break;
+
+							case Rendition.Strike:
+								if (strike_count)
+								{
+									strike_count -= 1;
+									if (!strike_count)
+									{ writeEscapeCode(Rendition.NotStrike); }
+								}
+								break;
+
+							default:
+								break;
+						}
+					}
+				}
+				break;
+		}
+	}
+
+	private void handleEscValue(Char[] esc)
+	{
+		switch (esc)
+		{
+			case "&lt;":
+				result ~= "<";
+				break;
+
+			case "&gt;":
+				result ~= ">";
+				break;
+
+			case "&amp;":
+				result ~= "&";
+				break;
+
+			default:
+				result ~= esc;
+				break;
+		}
+	}
+
+	private void writeEscapeCode(T)(T code)
+	{
+		if (enable_color)
+		{ result ~= format!"\x1B[%dm"(code); }
+	}
+
+	private static TagPair tagPair(Char)(ref Char[] tag)
+	{
+		if (tag.startsWith("</"))
+		{
+			tag = tag[2 .. $ - 1];
+			return TagPair.Closing;
+		}
+		else
+		{
+			tag = tag[1 .. $ - 1];
+			return TagPair.Opening;
+		}
+	}
+
+	private enum TagPair
+	{
+		Opening,
+		Closing,
+	}
+
+	private enum Expect
+	{
+		Text,
+		Tag,
+		Esc
 	}
 }
 
-package Nullable!FgColor fgColorFromRendition(Rendition rendition)
+@"Opening and closing color tags works."
+unittest
 {
-	if (rendition >= 30 && rendition < 38)
-	{
-		return nullable(cast(FgColor) rendition);
-	}
-	else if (rendition >= 90 && rendition < 98)
-	{
-		return nullable(cast(FgColor) rendition);
-	}
+	import fluentasserts.core.base;
 
-	return Nullable!FgColor.init;
+	auto result = parseFmt(true, "<red>Foo</red>");
+
+	expect(cast(char[]) result)
+		.equal(cast(char[]) "\x1B[31mFoo\x1B[39m");
 }
 
-package Nullable!BgColor bgColorFromRendition(Rendition rendition)
+@"Opening and closing multiple color tags works."
+unittest
 {
-	if (rendition >= 40 && rendition < 48)
-	{
-		return nullable(cast(BgColor) rendition);
-	}
-	else if (rendition >= 100 && rendition < 108)
-	{
-		return nullable(cast(BgColor) rendition);
-	}
+	import fluentasserts.core.base;
 
-	return Nullable!BgColor.init;
+	auto result = parseFmt(true, "<red><blue><orange>Foo</orange></blue></red>");
+
+	expect(cast(ubyte[]) result)
+		.equal(cast(ubyte[]) "\x1B[31m\x1B[34m\x1B[33mFoo\x1B[34m\x1B[31m\x1B[39m");
 }
