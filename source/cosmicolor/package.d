@@ -135,6 +135,8 @@ shared static this() @trusted
 
 		if (!isVirtualTerminal(STD_ERROR_HANDLE))
 		{ cast(void) setVirtualTerminal(STD_ERROR_HANDLE); }
+
+		SetConsoleOutputCP(CP_UTF8);
 	}
 	else version (Posix)
 	{
@@ -175,8 +177,8 @@ version (Windows)
 	{
 		if (const hConsoleHandle = GetStdHandle(nStdHandle))
 		{
-			enum flag = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-			return cast(bool) SetConsoleMode(cast(HANDLE) hConsoleHandle, flag);
+			enum flags = ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT;
+			return cast(bool) SetConsoleMode(cast(HANDLE) hConsoleHandle, flags);
 		}
 
 		return false;
