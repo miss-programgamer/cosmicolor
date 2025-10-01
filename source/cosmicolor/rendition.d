@@ -70,51 +70,51 @@ package enum Rendition
 
 package enum FgColor
 {
-	FgBlack = 30,
-	FgRed = 31,
-	FgGreen = 32,
-	FgOrange = 33,
-	FgBlue = 34,
-	FgMagenta = 35,
-	FgCyan = 36,
-	FgLGrey = 37,
+	Black = 30,
+	Red = 31,
+	Green = 32,
+	Orange = 33,
+	Blue = 34,
+	Magenta = 35,
+	Cyan = 36,
+	LGrey = 37,
 
-	FgNone = 39,
+	None = 39,
 
-	FgGrey = 90,
-	FgLRed = 91,
-	FgLGreen = 92,
-	FgYellow = 93,
-	FgLBlue = 94,
-	FgLMagenta = 95,
-	FgLCyan = 96,
-	FgWhite = 97,
+	Grey = 90,
+	LRed = 91,
+	LGreen = 92,
+	Yellow = 93,
+	LBlue = 94,
+	LMagenta = 95,
+	LCyan = 96,
+	White = 97,
 }
 
 package enum BgColor
 {
-	BgBlack = 40,
-	BgRed = 41,
-	BgGreen = 42,
-	BgOrange = 43,
-	BgBlue = 44,
-	BgMagenta = 45,
-	BgCyan = 46,
-	BgLGrey = 47,
+	Black = 40,
+	Red = 41,
+	Green = 42,
+	Orange = 43,
+	Blue = 44,
+	Magenta = 45,
+	Cyan = 46,
+	LGrey = 47,
 
-	BgNone = 49,
+	None = 49,
 
-	BgGrey = 100,
-	BgLRed = 101,
-	BgLGreen = 102,
-	BgYellow = 103,
-	BgLBlue = 104,
-	BgLMagenta = 105,
-	BgLCyan = 106,
-	BgWhite = 107,
+	Grey = 100,
+	LRed = 101,
+	LGreen = 102,
+	Yellow = 103,
+	LBlue = 104,
+	LMagenta = 105,
+	LCyan = 106,
+	White = 107,
 }
 
-package Nullable!Rendition renditionFromTagName(Char)(in Char[] tag)
+package Nullable!Rendition renditionFromTagName(Char)(in Char[] tag) @safe
 {
 	final switch (tag)
 	{
@@ -197,7 +197,7 @@ package Nullable!Rendition renditionFromTagName(Char)(in Char[] tag)
 	}
 }
 
-package Nullable!FgColor fgColorFromRendition(Rendition rendition)
+package Nullable!FgColor fgColorFromRendition(Rendition rendition) @safe
 {
 	if (rendition >= 30 && rendition < 38)
 	{ return nullable(cast(FgColor) rendition); }
@@ -207,7 +207,7 @@ package Nullable!FgColor fgColorFromRendition(Rendition rendition)
 	return Nullable!FgColor.init;
 }
 
-package Nullable!BgColor bgColorFromRendition(Rendition rendition)
+package Nullable!BgColor bgColorFromRendition(Rendition rendition) @safe
 {
 	if (rendition >= 40 && rendition < 48)
 	{ return nullable(cast(BgColor) rendition); }

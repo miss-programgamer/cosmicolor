@@ -1,13 +1,20 @@
 module cosmicolor;
 
 import std.format : format;
-import std.process : environment;
-import std.range;
 import std.stdio;
 import std.traits;
 
 import cosmicolor.parser;
 
+/** 
+ * Whether the environment supports color & the user wants them.
+ * 
+ * On Unix platforms, this is checked using `isatty` and `NO_COLOR`.
+ * 
+ * On Windows, the library tries to enable virtual terminal processing to
+ *   enable ANSI escape sequences. That is, if the output stream is determined
+ *   to be `FILE_TYPE_CHAR` and `NO_COLOR` is not set, of course.
+ */
 const bool enable_color;
 
 /** 
@@ -17,7 +24,7 @@ const bool enable_color;
  *   fmt = The format string. When passed as a compile-time argument, it will be parsed & statically checked against the types of items to write.
  *   args = Items to write.
  */
-void cwritef(alias fmt, A...)(A args)
+void cwritef(alias fmt, A...)(A args) @safe
 	if (isSomeString!(typeof(fmt)))
 {
 	if (enable_color)
@@ -33,12 +40,12 @@ void cwritef(alias fmt, A...)(A args)
 }
 
 /** ditto */
-void cwritef(Char, A...)(in Char[] fmt, A args)
+void cwritef(Char, A...)(in Char[] fmt, A args) @safe
 	if (isSomeString!(Char[]))
 { writef(parseFmt(enable_color, fmt), args); }
 
 /** ditto */
-void cwritef(Char, A...)(File file, in Char[] fmt, A args)
+void cwritef(Char, A...)(File file, in Char[] fmt, A args) @safe
 	if (isSomeString!(Char[]))
 { file.writef(parseFmt(enable_color, fmt), args); }
 
@@ -49,7 +56,7 @@ void cwritef(Char, A...)(File file, in Char[] fmt, A args)
  *   fmt = The format string. When passed as a compile-time argument, it will be parsed & statically checked against the types of items to write.
  *   args = Items to write.
  */
-void cwritefln(alias fmt, A...)(A args)
+void cwritefln(alias fmt, A...)(A args) @safe
 	if (isSomeString!(typeof(fmt)))
 {
 	if (enable_color)
@@ -65,7 +72,7 @@ void cwritefln(alias fmt, A...)(A args)
 }
 
 /** ditto */
-void cwritefln(alias fmt, A...)(File file, A args)
+void cwritefln(alias fmt, A...)(File file, A args) @safe
 	if (isSomeString!(typeof(fmt)))
 {
 	if (enable_color)
@@ -81,12 +88,12 @@ void cwritefln(alias fmt, A...)(File file, A args)
 }
 
 /** ditto */
-void cwritefln(Char, A...)(in Char[] fmt, A args)
+void cwritefln(Char, A...)(in Char[] fmt, A args) @safe
 	if (isSomeString!(Char[]))
 { writefln(parseFmt(enable_color, fmt), args); }
 
 /** ditto */
-void cwritefln(Char, A...)(File file, in Char[] fmt, A args)
+void cwritefln(Char, A...)(File file, in Char[] fmt, A args) @safe
 	if (isSomeString!(Char[]))
 { file.writefln(parseFmt(enable_color, fmt), args); }
 
@@ -99,17 +106,20 @@ void cwritefln(Char, A...)(File file, in Char[] fmt, A args)
  * 
  * Returns: the formatted and colorized string.
  */
-auto cformat(alias fmt, A...)(A args)
+auto cformat(alias fmt, A...)(A args) @safe
 	if (isSomeString!(typeof(fmt)))
 { return format!(parseFmt(enable_color, fmt))(args); }
 
 /** ditto */
-auto cformat(Char, A...)(in Char[] fmt, A args)
+auto cformat(Char, A...)(in Char[] fmt, A args) @safe
 	if (isSomeString!(Char[]))
 { return format(parseFmt(enable_color, fmt), args); }
 
-shared static this()
+shared static this() @trusted
 {
+	import std.process : environment;
+	import std.range : empty;
+
 	enable_color = environment.get("NO_COLOR", "").empty;
 
 	version (Windows)

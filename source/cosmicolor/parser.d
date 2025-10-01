@@ -11,7 +11,7 @@ import std.traits;
 import cosmicolor.rendition;
 
 
-package auto parseFmt(Char)(in bool enable_color, in Char[] fmt)
+package auto parseFmt(Char)(in bool enable_color, in Char[] fmt) @safe
 {
 	return Parser!Char(enable_color).parseFmt(fmt);
 }
@@ -40,14 +40,12 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 	private int strike_count;
 
 
-	this(in bool enable_color)
+	this(in bool enable_color) @safe
 	{
 		this.enable_color = enable_color;
-		foregrounds = [];
-		backgrounds = [];
 	}
 
-	Char[] parseFmt(in Char[] fmt)
+	Char[] parseFmt(in Char[] fmt) @safe
 	{
 		foreach (c; fmt)
 		{
@@ -76,7 +74,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		return result[];
 	}
 
-	private void handleText(Char c)
+	private void handleText(Char c) @safe
 	{
 		if (c == '<')
 		{
@@ -94,7 +92,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		}
 	}
 
-	private void handleTag(Char c)
+	private void handleTag(Char c) @safe
 	{
 		if (c.isAlpha || c == '_' || (c == '/' && content[] == "<"))
 		{
@@ -114,7 +112,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		}
 	}
 
-	private void handleEsc(Char c)
+	private void handleEsc(Char c) @safe
 	{
 		if (c.isAlpha)
 		{
@@ -134,7 +132,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		}
 	}
 
-	private void handleTagValue(Char[] tag)
+	private void handleTagValue(Char[] tag) @safe
 	{
 		final switch (tagPair(tag))
 		{
@@ -194,7 +192,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 							if (!foregrounds.empty)
 							{ writeEscapeCode(foregrounds.back); }
 							else
-							{ writeEscapeCode(FgColor.FgNone); }
+							{ writeEscapeCode(FgColor.None); }
 						}
 					}
 					else if (auto color = bgColorFromRendition(rend.get))
@@ -206,7 +204,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 							if (!backgrounds.empty)
 							{ writeEscapeCode(backgrounds.back); }
 							else
-							{ writeEscapeCode(BgColor.BgNone); }
+							{ writeEscapeCode(BgColor.None); }
 						}
 					}
 					else
@@ -258,7 +256,7 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		}
 	}
 
-	private void handleEscValue(Char[] esc)
+	private void handleEscValue(Char[] esc) @safe
 	{
 		switch (esc)
 		{
@@ -280,13 +278,13 @@ package struct Parser(Char) if (isSomeString!(Char[]))
 		}
 	}
 
-	private void writeEscapeCode(T)(T code)
+	private void writeEscapeCode(T)(T code) @safe
 	{
 		if (enable_color)
 		{ result ~= format!"\x1B[%dm"(code); }
 	}
 
-	private static TagPair tagPair(Char)(ref Char[] tag)
+	private static TagPair tagPair(Char)(ref Char[] tag) @safe
 	{
 		if (tag.startsWith("</"))
 		{

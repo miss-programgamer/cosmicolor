@@ -2,7 +2,7 @@ import std.stdio: writeln;
 
 import cosmicolor;
 
-void main()
+void main() @safe
 {
 	writeln();
 	cwritefln!"<bg_magenta><b> * %s * </b></bg_magenta>"("Cosmicolor");
