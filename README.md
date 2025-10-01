@@ -57,32 +57,38 @@ cwritefln(fmt, "Hello World!");
 
 ## API
 
-Cosmicolor provides a mere three functions to write colored text to the console: `cwritef`, `cwritefln`, and `cformat`. The vast majority of the time, you'll probably just use `cwritefln` though.
+Cosmicolor provides a mere three functions (plus one constant) to write colored text to the console: `cwritef`, `cwritefln`, and `cformat`. The vast majority of the time, you'll probably just use `cwritefln` though.
 
 You may have noticed that there aren't colored equivalents for `write` nor for `writeln`. That's because Cosmicolor only applies colors to the format strings of the functions it does implement! This may seem like an arbitrary limitation, but in practice it eliminates the need to escape argument strings before passing them, as demonstrated in the main "cheat sheet" app where color tags are colorized using themselves with no need to handle them specially.
 
-### `cwritef` - Write a colored, formatted string to `stdout` by default.
+### `cwritef()` - Write a colored, formatted string to `stdout` by default.
 
 - `File file` - Optional file handle, allows the user to call this function like `stdout.cwritef(...)` using UFCS.
 - `Char[] fmt` - Format string. Just like with `writef`, it can be passed as a template argument.
 - `A...args` - Items to print. No need to escape them in any special way.
 
-### `cwritefln` - Write a colored, formatted line to `stdout` by default.
+### `cwritefln()` - Write a colored, formatted line to `stdout` by default.
 
 - `File file` - Optional file handle, allows the user to call this function like `stdout.cwritef(...)` using UFCS.
 - `Char[] fmt` - Format string. Just like with `writefln`, it can be passed as a template argument.
 - `A...args` - Items to print. No need to escape them in any special way.
 
-### `cformat` - Format & return a colored string in advance.
+### `cformat()` - Format & return a colored string in advance.
 
 - `Char[] fmt` - Format string. Just like with `format`, it can be passed as a template argument.
 - `A...args` - Items to print. No need to escape them in any special way.
+
+### `enable_color` - Constant for checking whether colors are enabled.
+
+This constant will be set to `true` if the console is or has been made capable of displaying colors & styles *and* the user wants their console output colorized as checked by the `NO_COLOR` environment variable. In all other cases, it will be `false`.
 
 ## Available Tags
 
 ### Colors
 
 As many colorizing libraries do, the colors provided correspond to basic ANSI escape code colors. They are listed here for the sake of completeness and convenience, though they are also visible in the cheat sheet above.
+
+Variants of all foreground colors are available for background colors by prefixing their name with `bg_`.
 
 - `black`
 - `red`
@@ -105,7 +111,7 @@ As many colorizing libraries do, the colors provided correspond to basic ANSI es
 
 Additionally, some style tags are available.
 
-- `bold`
-- `italic`
-- `underline`
-- `strike`
+- `bold` display **bold** text
+- `italic` display *italicized* text
+- `underline` display <u>underlined</u> text
+- `strike` display ~~crossed out~~ text
