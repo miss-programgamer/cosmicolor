@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.3 - October 2nd 2025
+
+- Made console automatically use UTF-8 on Windows.
+
+## v0.1.2 - September 30th 2025
+
+- Made entire API surface explicitly @safe.
+- Documented constant enable_color.
+
 ## v0.1.1 - September 30th 2025
 
 - Added changelog (this file).
