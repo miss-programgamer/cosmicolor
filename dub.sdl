@@ -2,7 +2,7 @@ name "cosmicolor"
 description "Yet another console output colorizer library!"
 authors "Mireille Arseneault"
 copyright "Copyright © 2025, Mireille Arseneault"
-license "mit"
+license "MIT"
 
 targetPath "build"
 
