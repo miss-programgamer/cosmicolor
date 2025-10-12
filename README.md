@@ -4,7 +4,7 @@ Yet another console output colorizer library!
 
 ![Cosmicolor Cheat Sheet](https://imgur.com/SUo3HSz.png)
 
-Cosmicolor is a console output colorizer library for the [D programming language](https://dlang.org/) that lets you paint your terminal text using a simple XML-like syntax. It "just works", even on Windows, without so much as an initialization function & respects [NO_COLOR](https://no-color.org/) out of the box. Its output can also be safely "piped" to other processes or even files and Cosmicolor will simply strip the color tags from format strings without emitting any color escape codes or the like.
+Cosmicolor is a console output colorizer library for the [D programming language](https://dlang.org/) that lets you paint your terminal text using a simple XML-like syntax. It "just works", even on Windows, without so much as an initialization function & respects [`NO_COLOR`](https://no-color.org/) out of the box. Its output can also be safely "piped" to other processes or even files and Cosmicolor will simply strip the color tags from format strings without emitting any color escape codes or the like.
 
 ## Format
 
@@ -78,9 +78,9 @@ You may have noticed that there aren't colored equivalents for `write` nor for `
 - `Char[] fmt` - Format string. Just like with `format`, it can be passed as a template argument.
 - `A...args` - Items to print. No need to escape them in any special way.
 
-### `enable_color` - Constant for checking whether colors are enabled.
+### `enable_color_out` and `enable_color_err` - Constants for checking whether colors are enabled and on which standard output streams.
 
-This constant will be set to `true` if the console is or has been made capable of displaying colors & styles *and* the user wants their console output colorized as checked by the `NO_COLOR` environment variable. In all other cases, it will be `false`.
+These constants will be set to `true` if the corresponding console is or has been made capable of displaying colors & styles *and* the user wants their console output colorized, as checked by the `NO_COLOR` environment variable. In all other cases, they will be `false`.
 
 ## Available Tags
 
