@@ -218,8 +218,8 @@ shared static this() @trusted
 	{
 		import core.sys.posix.unistd;
 
-		enable_color_out &= isatty(STDOUT_FILENO);
-		enable_color_err &= isatty(STDERR_FILENO);
+		enable_color_out &= cast(bool) isatty(STDOUT_FILENO);
+		enable_color_err &= cast(bool) isatty(STDERR_FILENO);
 	}
 }
 

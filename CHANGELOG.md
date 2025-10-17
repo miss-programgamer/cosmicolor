@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.5 - October 16th 2025
+
+- Fixed compilation error on Posix systems related to tty detection.
+
 ## v0.1.4 - October 12th 2025
 
 - Now checking STDOUT and STDERR separately. This means piping to a file will no longer disable colors for STDERR & vice-versa.
